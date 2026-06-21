@@ -334,7 +334,7 @@ export default function App() {
           setMatchdays([]);
           localStorage.setItem('isoki_matchdays', JSON.stringify([]));
         } else {
-          const activeSeedMembers = currentMembersList.filter(m => m.aktif);
+          const activeSeedMembers = currentMembersList.filter((m: Member) => m.aktif);
           const seedMatchdays: Matchday[] = [
             {
               id: 'seed_match_1',
@@ -410,7 +410,7 @@ export default function App() {
     let maxNum = 0;
     const prefix = getClubAbbrev();
     const regex = new RegExp(`^${prefix}(\\d+)$`, 'i');
-    members.forEach((m) => {
+    members.forEach((m: Member) => {
       const matcher = m.kodeMember.match(regex);
       if (matcher && matcher[1]) {
         const num = parseInt(matcher[1], 10);
@@ -441,7 +441,7 @@ export default function App() {
     try {
       if (memberData.id) {
         // Edit action
-        const updated = members.map((m) =>
+        const updated = members.map((m: Member) =>
           m.id === memberData.id ? { ...m, ...memberData as Member } : m
         );
         persistMembers(updated);
@@ -505,13 +505,13 @@ export default function App() {
     setSyncError(null);
 
     try {
-      const updated = members.map((m) =>
+      const updated = members.map((m: Member) =>
         m.kodeMember === kodeMember ? { ...m, aktif: !m.aktif } : m
       );
       persistMembers(updated);
 
       // Sync to Supabase if clubId exists
-      const member = updated.find(m => m.kodeMember === kodeMember);
+      const member = updated.find((m: Member) => m.kodeMember === kodeMember);
       if (clubId && member) {
         const result = await membersHook.toggleMemberActive(member.id, member.aktif);
         if (!result.success) {
@@ -564,7 +564,7 @@ export default function App() {
     setSyncError(null);
 
     try {
-      const updated = transactions.filter((t) => t.id !== id);
+      const updated = transactions.filter((t: Transaction) => t.id !== id);
       persistTransactions(updated);
 
       // Sync to Supabase if clubId exists
@@ -588,12 +588,12 @@ export default function App() {
   const inactiveMembers = totalMembers - activeMembers;
 
   const totalIncome = transactions
-    .filter((t) => t.tipe === 'Pemasukan')
-    .reduce((a, b) => a + b.jumlah, 0);
+    .filter((t: Transaction) => t.tipe === 'Pemasukan')
+    .reduce((a: number, b: Transaction) => a + b.jumlah, 0);
 
   const totalExpense = transactions
-    .filter((t) => t.tipe === 'Pengeluaran')
-    .reduce((a, b) => a + b.jumlah, 0);
+    .filter((t: Transaction) => t.tipe === 'Pengeluaran')
+    .reduce((a: number, b: Transaction) => a + b.jumlah, 0);
 
   const netBalance = totalIncome - totalExpense;
 
@@ -667,7 +667,7 @@ export default function App() {
                       <p className="text-xs text-white/30 py-6 text-center font-sans">Belum ada pencatatan kas iuran.</p>
                     ) : (
                       <div className="space-y-3">
-                        {transactions.slice(0, 4).map((tx) => (
+                        {transactions.slice(0, 4).map((tx: Transaction) => (
                           <div key={tx.id} className="flex justify-between items-center p-3.5 bg-[#18181b] border border-white/5 rounded-2xl">
                             <div>
                               <p className="text-xs font-semibold text-neutral-205 text-neutral-300">{tx.deskripsi}</p>
