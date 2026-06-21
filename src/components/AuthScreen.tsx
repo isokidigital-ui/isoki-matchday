@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { Shield, Key, User, ArrowRight, Eye, EyeOff, Upload, Image as ImageIcon, Award, Sparkles, Database, Palette, Globe, Loader } from 'lucide-react';
+import { Shield, Key, User, ArrowRight, Eye, EyeOff, Upload, Image as ImageIcon, Award, Sparkles, Database, Palette, Globe, Loader, Ticket } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ClubConfig } from '../types';
 import { LangType, TRANSLATIONS } from '../utils/lang';
 import { useAuth } from '../hooks/useAuth';
+import { useInvitationCodes } from '../hooks/useInvitationCodes';
 
 interface AuthScreenProps {
   onLogin: (username: string, clubConfig?: ClubConfig) => void;
@@ -38,6 +39,7 @@ export const getInitialsLogoUri = (abbrev: string, color: string): string => {
 export default function AuthScreen({ onLogin, lang, toggleLang }: AuthScreenProps) {
   const t = TRANSLATIONS[lang];
   const authHook = useAuth();
+  const invitationHook = useInvitationCodes();
   const [activeTab, setActiveTabOriginal] = useState<'login' | 'register'>('login');
   
   // Login States
@@ -50,6 +52,7 @@ export default function AuthScreen({ onLogin, lang, toggleLang }: AuthScreenProp
   // Register / Onboarding States
   const [regUsername, setRegUsername] = useState('admin');
   const [regPassword, setRegPassword] = useState('admin123');
+  const [invitationCode, setInvitationCode] = useState('');
   const [clubName, setClubName] = useState('');
   const [clubAbbrev, setClubAbbrev] = useState('');
 
@@ -162,18 +165,35 @@ export default function AuthScreen({ onLogin, lang, toggleLang }: AuthScreenProp
     setIsRegistering(true);
 
     try {
+      // 1. Validate invitation code
+      if (!invitationCode.trim()) {
+        setErrorRegister(lang === 'ID' ? 'Kode undangan wajib diisi!' : 'Invitation code is required!');
+        setIsRegistering(false);
+        return;
+      }
+
+      const codeValidation = await invitationHook.validateCode(invitationCode.trim());
+      if (!codeValidation.success) {
+        setErrorRegister(codeValidation.message);
+        setIsRegistering(false);
+        return;
+      }
+
       if (!clubName.trim()) {
         setErrorRegister(lang === 'ID' ? 'Nama Klub wajib diisi!' : 'Club Name is required!');
+        setIsRegistering(false);
         return;
       }
       if (!clubAbbrev.trim()) {
         setErrorRegister(lang === 'ID' ? 'Singkatan nama klub wajib diisi!' : 'Club Initials/Abbr is required!');
+        setIsRegistering(false);
         return;
       }
 
       const cleanAbbrev = clubAbbrev.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
       if (cleanAbbrev.length < 2 || cleanAbbrev.length > 6) {
         setErrorRegister(lang === 'ID' ? 'Singkatan Club harus berupa 2-6 karakter alfanumerik!' : 'Club initials must be between 2 and 6 alphanumeric characters!');
+        setIsRegistering(false);
         return;
       }
 
@@ -190,6 +210,9 @@ export default function AuthScreen({ onLogin, lang, toggleLang }: AuthScreenProp
       );
 
       if (result.success) {
+        // 2. Mark code as used after successful registration
+        await invitationHook.markCodeAsUsed(invitationCode.trim());
+
         const clubConfig: ClubConfig = {
           name: clubName.trim(),
           abbreviation: cleanAbbrev,
@@ -427,6 +450,28 @@ export default function AuthScreen({ onLogin, lang, toggleLang }: AuthScreenProp
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Invitation Code Input */}
+              <div>
+                <label className="block text-[10px] font-mono text-white/40 uppercase tracking-widest mb-1.5">
+                  <Ticket className="inline h-3.5 w-3.5 mr-1.5" style={{ color: selectedColor }} />
+                  {lang === 'ID' ? 'Kode Undangan' : 'Invitation Code'} <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder={lang === 'ID' ? 'Contoh: ISK-XXXXX-XXXXX' : 'e.g. ISK-XXXXX-XXXXX'}
+                  value={invitationCode}
+                  onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
+                  className="w-full px-3.5 py-2.5 bg-[#0a0a0b] border border-white/5 focus:border-brand rounded-xl text-xs text-white font-mono focus:outline-none transition-colors"
+                  style={{ borderColor: `${selectedColor}30` }}
+                />
+                <p className="text-[8px] text-white/30 mt-1.5 font-sans">
+                  {lang === 'ID' 
+                    ? 'Hubungi admin Isoki untuk mendapatkan kode undangan.' 
+                    : 'Contact Isoki admin to get an invitation code.'}
+                </p>
               </div>
 
               {/* Club Identity Inputs */}
