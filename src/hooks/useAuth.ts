@@ -106,6 +106,32 @@ export const useAuth = () => {
         };
       }
 
+      // Access control: only allow whitelisted admin_username to access exactly one club (tim)
+      // Default whitelist table: allowed_admins(admin_username, club_id, active)
+      const { data: allowedRow, error: allowedError } = await supabase
+        .from('allowed_admins')
+        .select('admin_username, club_id, active')
+        .eq('admin_username', adminUsername)
+        .eq('club_id', data.id)
+        .eq('active', true)
+        .maybeSingle();
+
+      if (allowedError) {
+        setError(allowedError.message);
+        return {
+          success: false,
+          message: allowedError.message,
+        };
+      }
+
+      if (!allowedRow) {
+        setError('Akses ditolak: admin ini tidak punya izin untuk tim ini');
+        return {
+          success: false,
+          message: 'Akses ditolak: admin ini tidak punya izin untuk tim ini',
+        };
+      }
+
       return {
         success: true,
         message: 'Login successful',

@@ -10,7 +10,10 @@ import MatchdayDashboard from './components/MatchdayDashboard';
 import HomeMatches from './components/HomeMatches';
 import ModalMember from './components/ModalMember';
 import ModalTransaction from './components/ModalTransaction';
-import { Shield, Users, Wallet, CheckCircle2, X, AlertTriangle, Cloud, Wifi } from 'lucide-react';
+import AdminInvitationCodes from './components/AdminInvitationCodes';
+import { Shield, Users, Wallet, CheckCircle2, X, AlertTriangle, Cloud, Wifi, Settings } from 'lucide-react';
+import SuperAdminApp from './components/SuperAdminApp';
+
 import { motion, AnimatePresence } from 'motion/react';
 import { TRANSLATIONS, LangType } from './utils/lang';
 import { useAuth } from './hooks/useAuth';
@@ -47,6 +50,10 @@ export default function App() {
 
   // ---- STORES & PERSISTENCY STATE ----
   const [members, setMembers] = useState<Member[]>([]);
+
+  // Super admin mode: route via URL path starting with /super
+  const isSuperAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/super');
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [matchdays, setMatchdays] = useState<Matchday[]>([]);
   const [selectedMatchdayId, setSelectedMatchdayId] = useState<string | null>(null);
@@ -597,10 +604,16 @@ export default function App() {
 
   const netBalance = totalIncome - totalExpense;
 
+  // Super admin screen (separate portal)
+  if (isSuperAdminRoute) {
+    return <SuperAdminApp lang={lang} toggleLang={toggleLang} />;
+  }
+
   // Protect Router Screen
   if (!auth.isAuthenticated) {
     return <AuthScreen onLogin={handleLogin} lang={lang} toggleLang={toggleLang} />;
   }
+
 
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-neutral-200 flex flex-col font-sans select-none antialiased">

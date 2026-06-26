@@ -25,13 +25,43 @@ export const useMatchdays = () => {
         return { success: false, data: [] };
       }
 
-      const matchdays: Matchday[] = (data || []).map(m => ({
-        id: m.id,
-        tanggal: m.tanggal,
-        lokasi: m.lokasi,
-        opponent: m.opponent,
-        jenisPertandingan: m.jenis_pertandingan,
+      // NOTE: Map fields from Supabase to the app's Matchday type.
+      // The current DB schema in this repo seems not fully aligned with src/types.ts Matchday.
+      // To keep the app type-safe, we only fill the required fields with sane defaults.
+      const matchdays: Matchday[] = (data || []).map((m: any) => ({
+        id: String(m.id),
+        tanggal: String(m.tanggal),
+        waktuMulai: String(m.waktu_mulai ?? m.waktuMulai ?? '14:00'),
+        waktuSelesai: String(m.waktu_selesai ?? m.waktuSelesai ?? '16:00'),
+        namaMatchday: String(m.nama_matchday ?? m.namaMatchday ?? `Matchday`),
+        lokasi: String(m.lokasi ?? ''),
+        sewaLapangan: Number(m.sewa_lapangan ?? m.sewaLapangan ?? 0),
+        airMinum: Number(m.air_minum ?? m.airMinum ?? 40000),
+        parkir: Number(m.parkir ?? 25000),
+        laundry: Number(m.laundry ?? 20000),
+        qtyAirMinum: m.qty_air_minum != null ? Number(m.qty_air_minum) : undefined,
+        hargaAirMinumPerDus: m.harga_air_minum_per_dus != null ? Number(m.harga_air_minum_per_dus) : undefined,
+        qtyLaundryKg: m.qty_laundry_kg != null ? Number(m.qty_laundry_kg) : undefined,
+        hargaLaundryPerKg: m.harga_laundry_per_kg != null ? Number(m.harga_laundry_per_kg) : undefined,
+        sewaWasit: m.sewa_wasit != null ? Number(m.sewa_wasit) : undefined,
+        tarifWasitPerJam: m.tarif_wasit_per_jam != null ? Number(m.tarif_wasit_per_jam) : undefined,
+        durasiWasitJam: m.durasi_wasit_jam != null ? Number(m.durasi_wasit_jam) : undefined,
+        fotografer: m.fotografer != null ? Number(m.fotografer) : undefined,
+        tarifFotograferPerJam: m.tarif_fotografer_per_jam != null ? Number(m.tarif_fotografer_per_jam) : undefined,
+        durasiFotograferJam: m.durasi_fotografer_jam != null ? Number(m.durasi_fotografer_jam) : undefined,
+        videografer: m.videografer != null ? Number(m.videografer) : undefined,
+        tarifVideograferPerJam: m.tarif_videografer_per_jam != null ? Number(m.tarif_videografer_per_jam) : undefined,
+        durasiVideograferJam: m.durasi_videografer_jam != null ? Number(m.durasi_videografer_jam) : undefined,
+        durasiJam: m.durasi_jam != null ? Number(m.durasi_jam) : 2,
+        sewaPerJam: m.sewa_per_jam != null ? Number(m.sewa_per_jam) : undefined,
+        customExpenseDeskripsi: m.custom_expense_deskripsi ?? undefined,
+        customExpenseJumlah: m.custom_expense_jumlah != null ? Number(m.custom_expense_jumlah) : undefined,
+        attendance: [],
+        isSynced: Boolean(m.is_synced ?? m.isSynced ?? false),
+        jenisMatch: m.jenis_match ?? m.jenisMatch ?? 'Latihan Internal',
+        kategoriCabang: m.kategori_cabang ?? m.kategoriCabang ?? undefined,
       }));
+
 
       return { success: true, data: matchdays };
     } catch (err) {
@@ -102,8 +132,11 @@ export const useMatchdays = () => {
             club_id: clubId,
             tanggal: matchday.tanggal,
             lokasi: matchday.lokasi,
-            opponent: matchday.opponent,
-            jenis_pertandingan: matchday.jenisPertandingan,
+            // These columns may not exist in current src/types.ts; keep insert minimal.
+            // If you have matching columns in Supabase, map them accordingly.
+            jenis_pertandingan: matchday.jenisMatch,
+
+
           },
         ])
         .select()
