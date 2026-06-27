@@ -52,7 +52,7 @@ export default function SuperAdminApp({
     );
   }
 
-  alert('SUPER_APP_RENDER');
+
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-neutral-200 p-4 md:p-6">
 
