@@ -3,11 +3,14 @@ import { supabase } from '../lib/supabase';
 import { ClubConfig } from '../types';
 import { simpleHash } from '../utils/auth-helper';
 
+
 export interface AuthResponse {
   success: boolean;
   message: string;
   clubConfig?: ClubConfig;
+  onboarded?: boolean;
 }
+
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -135,6 +138,7 @@ export const useAuth = () => {
       return {
         success: true,
         message: 'Login successful',
+        onboarded: !!data.onboarded,
         clubConfig: {
           name: data.name,
           abbreviation: data.abbreviation,
@@ -143,6 +147,7 @@ export const useAuth = () => {
           themeColorHover: data.theme_color_hover,
         },
       };
+
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);

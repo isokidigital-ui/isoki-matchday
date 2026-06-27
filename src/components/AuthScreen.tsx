@@ -7,7 +7,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useInvitationCodes } from '../hooks/useInvitationCodes';
 
 interface AuthScreenProps {
-  onLogin: (username: string, clubConfig?: ClubConfig) => void;
+  onLogin: (username: string, clubConfig?: ClubConfig, onboarded?: boolean) => void;
+
   lang: LangType;
   toggleLang: () => void;
 }
@@ -66,6 +67,7 @@ export default function AuthScreen({ onLogin, lang, toggleLang }: AuthScreenProp
 
   // Handle standard login with Supabase
   const handleLoginSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     setErrorLogin('');
     setIsLoggingIn(true);
@@ -76,7 +78,8 @@ export default function AuthScreen({ onLogin, lang, toggleLang }: AuthScreenProp
       
       if (result.success && result.clubConfig) {
         // Login via Supabase succeeded
-        onLogin(username, result.clubConfig);
+        onLogin(username, result.clubConfig, !!result.onboarded);
+
       } else if (username.trim().toLowerCase() === 'admin' && password === 'admin123') {
         // Fallback to demo login for local testing
         const stored = localStorage.getItem('isoki_club_config');
@@ -86,7 +89,9 @@ export default function AuthScreen({ onLogin, lang, toggleLang }: AuthScreenProp
             config = JSON.parse(stored);
           } catch (err) {}
         }
-        onLogin(username, config);
+        onLogin(username, config, false);
+
+
       } else {
         setErrorLogin(result.message || (lang === 'ID' ? 'Username atau password salah!' : 'Incorrect username or password!'));
       }
@@ -286,38 +291,21 @@ export default function AuthScreen({ onLogin, lang, toggleLang }: AuthScreenProp
         transition={{ duration: 0.5 }}
         className="w-full max-w-lg bg-[#111112] border border-white/5 rounded-3xl shadow-2xl overflow-hidden relative z-10"
       >
-        {/* Registration Tab Selection */}
+        {/* Registration Tab Selection (only login now) */}
         <div className="flex border-b border-white/5 bg-[#18181b]/70 p-1.5 gap-1">
-          <button
-            onClick={() => setActiveTabOriginal('login')}
-            className={`flex-1 py-3 rounded-2xl text-xs font-bold font-mono uppercase tracking-widest transition-all cursor-pointer ${
-              activeTab === 'login'
-                ? 'text-black shadow-md'
-                : 'text-white/40 hover:text-white/80 hover:bg-white/5'
-            }`}
-            style={activeTab === 'login' ? { backgroundColor: selectedColor } : undefined}
+          <div
+            className={`flex-1 py-3 rounded-2xl text-xs font-bold font-mono uppercase tracking-widest transition-all cursor-pointer text-black shadow-md`}
+            style={{ backgroundColor: selectedColor }}
           >
             {t.loginTab}
-          </button>
-          <button
-            onClick={() => {
-              setActiveTabOriginal('register');
-              setErrorRegister('');
-            }}
-            className={`flex-1 py-3 rounded-2xl text-xs font-bold font-mono uppercase tracking-widest transition-all cursor-pointer ${
-              activeTab === 'register'
-                ? 'text-black shadow-md'
-                : 'text-white/40 hover:text-white/80 hover:bg-white/5'
-            }`}
-            style={activeTab === 'register' ? { backgroundColor: selectedColor } : undefined}
-          >
-            {t.registerTab}
-          </button>
+          </div>
+          <div className="flex-1" />
         </div>
 
         {/* Tab 1: LOGIN BOX */}
         {activeTab === 'login' && (
           <div className="p-6 sm:p-8">
+
             <h2 className="text-xs font-bold text-white/70 mb-5 flex items-center gap-2 font-mono uppercase tracking-widest">
               <Shield className="h-4 w-4" style={{ color: selectedColor }} />
               {t.adminLoginHeader}

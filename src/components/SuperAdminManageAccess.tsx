@@ -145,6 +145,9 @@ export default function SuperAdminManageAccess({ lang }: SuperAdminManageAccessP
 
   return (
     <div className="space-y-6">
+      <div className="text-[10px] text-white/30 font-mono mb-2">
+        Debug: clubs={clubs.length}, allowed_admins={allowedAdmins.length}, activeMappings={activeMappings.length}
+      </div>
       <div className="bg-[#111112] border border-white/5 rounded-3xl p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -161,7 +164,7 @@ export default function SuperAdminManageAccess({ lang }: SuperAdminManageAccessP
           <div className="flex items-center gap-2 text-white/40 text-xs font-mono">
             <Users className="w-4 h-4" />
             <span>
-              {isID ? 'Active Admin:' : 'Active Admin:'} {activeMappings.length}
+              {isID ? 'Active Mapping:' : 'Active Mapping:'} {activeMappings.length}
             </span>
           </div>
         </div>
@@ -193,19 +196,20 @@ export default function SuperAdminManageAccess({ lang }: SuperAdminManageAccessP
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-white/40 uppercase mb-2">{isID ? 'Tim (club)' : 'Team (club)'}</label>
-            <select
+            <label className="block text-xs font-mono text-white/40 uppercase mb-2">
+              {isID ? 'Tim (club_id)' : 'Team (club_id)'}
+            </label>
+            <input
               value={clubId}
               onChange={(e) => setClubId(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0a0a0b] border border-white/5 rounded-lg text-white text-sm focus:outline-none focus:border-[#bef264] cursor-pointer"
-            >
-              <option value="">{isID ? '-- Pilih Club --' : '-- Select Club --'}</option>
-              {clubs.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.abbreviation} - {c.name}
-                </option>
-              ))}
-            </select>
+              className="w-full px-3 py-2 bg-[#0a0a0b] border border-white/5 rounded-lg text-white text-sm focus:outline-none focus:border-[#bef264]"
+              placeholder={isID ? 'paste club_id dari Supabase' : 'paste club_id from Supabase'}
+            />
+            <p className="text-[10px] text-white/30 font-mono mt-2 leading-relaxed">
+              {isID
+                ? 'Dropdown sengaja dihapus. Masukkan club_id agar mapping 1 akun = 1 tim.'
+                : 'Dropdown removed intentionally. Paste club_id so mapping is 1 account = 1 team.'}
+            </p>
           </div>
 
           <div className="flex flex-col">

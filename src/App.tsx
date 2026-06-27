@@ -11,6 +11,8 @@ import HomeMatches from './components/HomeMatches';
 import ModalMember from './components/ModalMember';
 import ModalTransaction from './components/ModalTransaction';
 import AdminInvitationCodes from './components/AdminInvitationCodes';
+import OnboardingGate from './components/OnboardingGate';
+
 import { Shield, Users, Wallet, CheckCircle2, X, AlertTriangle, Cloud, Wifi, Settings } from 'lucide-react';
 import SuperAdminApp from './components/SuperAdminApp';
 
@@ -52,7 +54,12 @@ export default function App() {
   const [members, setMembers] = useState<Member[]>([]);
 
   // Super admin mode: route via URL path starting with /super
-  const isSuperAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/super');
+  const isSuperAdminRoute =
+    typeof window !== 'undefined' &&
+    (window.location.pathname.startsWith('/super') ||
+      /\/super(\/|$)/.test(window.location.pathname) ||
+      window.location.href.includes('/super'));
+
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [matchdays, setMatchdays] = useState<Matchday[]>([]);
@@ -241,7 +248,8 @@ export default function App() {
   };
 
   // ---- AUTH ACTIONS ----
-  const handleLogin = async (username: string, customConfig?: ClubConfig) => {
+  const handleLogin = async (username: string, customConfig?: ClubConfig, onboarded?: boolean) => {
+
     // Support both Supabase login dan local login (backward compat)
     if (!customConfig) {
       // Try Supabase login with username
@@ -265,9 +273,14 @@ export default function App() {
     setAuth(newAuth);
     localStorage.setItem('isoki_auth_session', JSON.stringify(newAuth));
 
+    if (typeof onboarded === 'boolean') {
+      localStorage.setItem('isoki_onboarded', onboarded ? 'true' : 'false');
+    }
+
     if (customConfig) {
       setClubConfig(customConfig);
       localStorage.setItem('isoki_club_config', JSON.stringify(customConfig));
+
 
       const abbrev = customConfig.abbreviation.toUpperCase();
       const isDemo = customConfig.abbreviation === 'GBMFC' && !customConfig.themeColor;
@@ -606,16 +619,60 @@ export default function App() {
 
   // Super admin screen (separate portal)
   if (isSuperAdminRoute) {
-    return <SuperAdminApp lang={lang} toggleLang={toggleLang} />;
+    return (
+      <>
+        <div id="super-branch-marker">
+          SUPER_BRANCH_MARKER path={typeof window !== 'undefined' ? window.location.pathname : 'no-window'}
+        </div>
+        <SuperAdminApp lang={lang} toggleLang={toggleLang} />
+      </>
+    );
   }
+
+
+
 
   // Protect Router Screen
   if (!auth.isAuthenticated) {
     return <AuthScreen onLogin={handleLogin} lang={lang} toggleLang={toggleLang} />;
   }
 
+  // Onboarding gate (DB-driven)
+  // `useAuth.loginClub()` sudah mengembalikan `onboarded`, tapi saat ini AuthState di project belum menyimpan onboarded.
+  // Jadi kita baca onboarded dari localStorage hasil login (yang saat ini hanya untuk menyimpan 1 field),
+  // namun nilai sumbernya diisi dari response `loginClub().onboarded` di handleLogin.
+  const onboarded = (() => {
+    try {
+      const raw = localStorage.getItem('isoki_onboarded');
+      if (raw === 'true') return true;
+      if (raw === 'false') return false;
+    } catch (e) {}
+    return null;
+  })();
+
+  if (onboarded === false && auth.adminUsername) {
+    const storedClub = localStorage.getItem('isoki_club_config');
+    const clubCfg = storedClub ? (JSON.parse(storedClub) as ClubConfig) : clubConfig;
+
+    return (
+      <OnboardingGate
+        lang={lang}
+        toggleLang={toggleLang}
+        adminUsername={auth.adminUsername || ''}
+        clubId={clubId || ''}
+        initialConfig={clubCfg}
+        onFinish={(cfg) => {
+          setClubConfig(cfg);
+          localStorage.setItem('isoki_club_config', JSON.stringify(cfg));
+          localStorage.setItem('isoki_onboarded', 'true');
+        }}
+      />
+    );
+  }
+
 
   return (
+
     <div className="min-h-screen bg-[#0a0a0b] text-neutral-200 flex flex-col font-sans select-none antialiased">
       {/* Header bar and controls */}
       <Header
