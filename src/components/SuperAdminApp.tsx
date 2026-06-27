@@ -52,10 +52,8 @@ export default function SuperAdminApp({
     );
   }
 
-
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-neutral-200 p-4 md:p-6">
-
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between gap-4 mb-6">
           <div>
@@ -72,11 +70,7 @@ export default function SuperAdminApp({
           </button>
         </div>
 
-        <div className="mb-4 text-xs font-mono text-rose-200/80">
-          RENDERED_NEW_SUPER_ADMIN_ACCESS
-        </div>
         <SuperAdminManageAccess lang={lang} />
-
       </div>
     </div>
   );
